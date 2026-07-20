@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <SmartRC_CC1101.h>
 #include <SPI.h>
+#include <config.h>
 
 #define CS D3
 #define MOSI D10
@@ -10,29 +11,41 @@
 
 SmartRC_CC1101 radio;
 
+enum FanMode {
+    FAN_TIMER_1H    = 0,
+    FAN_TIMER_4H    = 1,
+    FAN_SPEED_2     = 2,
+    FAN_SPEED_3     = 3,
+    FAN_SPEED_4     = 4,
+    FAN_SPEED_5     = 5,
+    FAN_SPEED_6     = 6,
+    FAN_SPEED_7     = 7,
+    FAN_DIR         = 9,
+    LIGHT_POWER     = 10,
+    LIGHT_BRIGHTEN  = 12,
+    LIGHT_DIM       = 13,
+    FAN_TIMER_8H    = 14,
+    FAN_SPEED_MIXED = 15,
+    FAN_POWER       = 17
+};
+
 struct Pulse
 {
   bool level;
   uint16_t duration;
 };
 
-// command = fan setting
-// fan id  = different per fan
-// must be 16 bits ea
-const uint16_t command = 0b0000001000000010;
-const uint16_t fanId   = 0b0000000000000000;
-
-const Pulse zero[] =
+const Pulse ZERO[] =
 { 
   {HIGH, 387}, 
   {LOW, 801} 
 };
-const Pulse one[] = 
+const Pulse ONE[] = 
 { 
   {HIGH, 935}, 
   {LOW, 230} 
 };
-const Pulse end[] = 
+const Pulse END[] = 
 { 
   {HIGH, 347}, 
   {LOW, 4326} 
@@ -40,41 +53,43 @@ const Pulse end[] =
 
 Pulse frame[66];
 
-void buildFrame(uint16_t commandBits, uint16_t idBits)
+void buildFrame(FanMode fan_mode, uint16_t fan_id)
 { 
-  uint16_t framePos = 0;
+  uint8_t pos = 0;
 
-  // command
+  // command (fan mode dec repeated twice)
+  uint16_t command = (fan_mode << 8) | fan_mode;
+
   for (int i = 15; i >= 0; --i)
   {
-    bool bit = (commandBits >> i) & 1;
+    bool bit = (command >> i) & 1;
 
     if (bit == LOW) {
-      frame[framePos++] = zero[0];
-      frame[framePos++] = zero[1];
+      frame[pos++] = ZERO[0];
+      frame[pos++] = ZERO[1];
     } else {
-      frame[framePos++] = one[0];
-      frame[framePos++] = one[1];
+      frame[pos++] = ONE[0];
+      frame[pos++] = ONE[1];
     }
   }
 
   // fan id
   for (int j = 15; j >= 0; --j)
   {
-    bool bit = (idBits >> j) & 1;
+    bool bit = (fan_id >> j) & 1;
 
     if (bit == LOW) {
-      frame[framePos++] = zero[0];
-      frame[framePos++] = zero[1];
+      frame[pos++] = ZERO[0];
+      frame[pos++] = ZERO[1];
     } else {
-      frame[framePos++] = one[0];
-      frame[framePos++] = one[1];
+      frame[pos++] = ONE[0];
+      frame[pos++] = ONE[1];
     }
   }
 
   // gap between frames
-  frame[framePos++] = end[0];
-  frame[framePos++] = end[1];
+  frame[pos++] = END[0];
+  frame[pos++] = END[1];
 }
 
 void transmitPulse(Pulse p)
@@ -123,9 +138,7 @@ void setup()
 
   pinMode(GDO0, OUTPUT);
 
-  //---
-
-  buildFrame(command, fanId);
+  // buildFrame()
 
 }
 
