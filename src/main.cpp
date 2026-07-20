@@ -57,6 +57,7 @@ const Pulse END[] =
 
 Pulse frame[66];
 
+char config_topic[64];
 char cmd_topic[64];
 char availability_topic[64];
 
@@ -127,13 +128,7 @@ void sendFrame(int8_t frame_count = 1)
 
 static void publishDevice()
 {
-
-  char config_topic[64];
   char payload[1024];
-
-  snprintf(config_topic, sizeof(config_topic), "homeassistant/device/%s/config", DEVICE_ID);
-  snprintf(cmd_topic, sizeof(cmd_topic), "devices/%s/set", DEVICE_ID);
-  snprintf(availability_topic, sizeof(availability_topic), "devices/%s/availability", DEVICE_ID);
 
   JsonDocument doc;
 
@@ -157,8 +152,8 @@ static void publishDevice()
   fan["spd_cmd_t"] = cmd_topic;
   fan["spd_rng_max"] = 6;
   fan["avty_t"] = availability_topic;
-  fan["pl_al_avail"] = "ONLINE";
-  fan["pl_not_avail"] = "OFFLINE";
+  fan["pl_avail"] = "online";
+  fan["pl_not_avail"] = "offline";
   fan["opt"] = true;
   fan["qos"] = 1;
 
@@ -180,7 +175,7 @@ static void mqttEventHandler(void* handler_args, esp_event_base_t base, int32_t 
 
       esp_mqtt_client_subscribe(mqtt_client, cmd_topic, 1);
       Serial.println("[!] Listening to commands.");
-      esp_mqtt_client_publish(mqtt_client, availability_topic, "ONLINE", 0, 1, true);
+      esp_mqtt_client_publish(mqtt_client, availability_topic, "online", 0, 1, true);
       Serial.println("[!] Published online status.");
 
       break;
@@ -228,7 +223,11 @@ static void mqttEventHandler(void* handler_args, esp_event_base_t base, int32_t 
 }
 
 static void initMQTT()
-{
+{ 
+  snprintf(config_topic, sizeof(config_topic), "homeassistant/device/%s/config", DEVICE_ID);
+  snprintf(cmd_topic, sizeof(cmd_topic), "devices/%s/set", DEVICE_ID);
+  snprintf(availability_topic, sizeof(availability_topic), "devices/%s/availability", DEVICE_ID);
+
   esp_mqtt_client_config_t mqtt_cfg = {};
   mqtt_cfg.broker.address.uri = MQTT_URI;
   mqtt_cfg.broker.verification.certificate = MQTT_CERT;
@@ -237,7 +236,7 @@ static void initMQTT()
   mqtt_cfg.credentials.authentication.password = MQTT_PASS;
   mqtt_cfg.session.keepalive = 30;
   mqtt_cfg.session.last_will.topic = availability_topic;
-  mqtt_cfg.session.last_will.msg = "OFFLINE";
+  mqtt_cfg.session.last_will.msg = "offline";
   mqtt_cfg.session.last_will.qos = 1;
   mqtt_cfg.session.last_will.retain = true;
 
@@ -265,7 +264,7 @@ static void initWiFi() {
 
 void setup()
 { 
-  delay(1000);
+  delay(5000);
   Serial.begin(115200);
 
   pinMode(GDO0, OUTPUT);
