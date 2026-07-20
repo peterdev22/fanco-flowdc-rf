@@ -149,7 +149,8 @@ static void publishDevice()
   fan["cmd_t"] = cmd_topic;
   fan["pl_on"] = "ON";
   fan["pl_off"] = "OFF";
-  fan["spd_cmd_t"] = cmd_topic;
+  fan["pct_cmd_t"] = cmd_topic;
+  fan["spd_rng_min"] = 1;
   fan["spd_rng_max"] = 6;
   fan["avty_t"] = availability_topic;
   fan["pl_avail"] = "online";
