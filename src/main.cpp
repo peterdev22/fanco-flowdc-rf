@@ -144,8 +144,8 @@ static void publishDevice()
 
   JsonObject fan = doc["cmps"]["fan"].to<JsonObject>();
   fan["p"] = "fan";
-  fan["name"] = DEVICE_NAME;
-  fan["uniq_id"] = DEVICE_ID;
+  fan["name"] = "Fan";
+  fan["uniq_id"] = "fan";
   fan["cmd_t"] = cmd_topic;
   fan["pl_on"] = "ON";
   fan["pl_off"] = "OFF";
@@ -157,6 +157,19 @@ static void publishDevice()
   fan["pl_not_avail"] = "offline";
   fan["opt"] = true;
   fan["qos"] = 1;
+
+  JsonObject light = doc["cmps"]["light"].to<JsonObject>();
+  light["p"] = "light";
+  light["name"] = "Light";
+  light["uniq_id"] = "light";
+  light["cmd_t"] = cmd_topic;
+  light["pl_on"] = "LIGHT_ON";
+  light["pl_off"] = "LIGHT_OFF";
+  light["avty_t"] = availability_topic;
+  light["pl_avail"] = "online";
+  light["pl_not_avail"] = "offline";
+  light["opt"] = true;
+  light["qos"] = 1;
 
   size_t payload_size = serializeJson(doc, payload, sizeof(payload));
 
@@ -212,6 +225,12 @@ static void mqttEventHandler(void* handler_args, esp_event_base_t base, int32_t 
       } else if (strncmp(event->data, "6", event->data_len) == 0) {
         buildFrame(FAN_SPEED_6, FAN_ID);
         sendFrame(5);
+      } else if (strncmp(event->data, "LIGHT_ON", event->data_len) == 0) {
+        buildFrame(LIGHT_POWER, FAN_ID);
+        sendFrame(10);
+      } else if (strncmp(event->data, "LIGHT_OFF", event->data_len) == 0) {
+        buildFrame(LIGHT_POWER, FAN_ID);
+        sendFrame(10);
       }
 
       break;
