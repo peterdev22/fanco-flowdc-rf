@@ -227,10 +227,10 @@ static void mqttEventHandler(void* handler_args, esp_event_base_t base, int32_t 
         sendFrame(5);
       } else if (strncmp(event->data, "LIGHT_ON", event->data_len) == 0) {
         buildFrame(LIGHT_POWER, FAN_ID);
-        sendFrame(10);
+        sendFrame(5);
       } else if (strncmp(event->data, "LIGHT_OFF", event->data_len) == 0) {
         buildFrame(LIGHT_POWER, FAN_ID);
-        sendFrame(10);
+        sendFrame(5);
       }
 
       break;
